@@ -22,3 +22,23 @@ class FeeAllocationSerializer(serializers.Serializer):
     _class = serializers.IntegerField(required=False)
     fee_category = serializers.IntegerField()
     total_amount = serializers.IntegerField()
+
+class FeeAllocationUpdateSerializer(serializers.Serializer):
+    total_amount = serializers.IntegerField()
+
+class FeeCollectionSerializer(serializers.Serializer):
+    payment_detail = serializers.ListField()
+    student_id = serializers.IntegerField()
+    mode_of_payment = serializers.IntegerField(required=False,default=1)
+    receipt_number = serializers.IntegerField(required=False)
+    remarks = serializers.CharField(required=False)
+
+
+class StudentPaymentSerializer(serializers.Serializer):
+    fee_allocation_id = serializers.IntegerField()
+    amount = serializers.IntegerField()
+    student_id = serializers.IntegerField()
+    remarks = serializers.CharField()
+
+
+
