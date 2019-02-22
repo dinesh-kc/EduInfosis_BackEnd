@@ -43,6 +43,7 @@ urlpatterns = [
     path('api/student/',include('student.urls')),
     path('api/admission/',include('admission.urls')),
     path('api/accounting/',include('accounting.urls')),
+    path('api/store/',include('store.urls')),
 
     ##Swagger
     url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),

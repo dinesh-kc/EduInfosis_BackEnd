@@ -36,15 +36,45 @@ class DailyExpenseViewSet(viewsets.ViewSet):
     def list(self,request):
         objects = self.queryset
         output = []
-        for obj in objects:
-            temp ={
-                'id':obj.id,
-                'expense_type':obj.expense_type.name,
-                'amount':obj.amount,
-                'expense_date':obj.expense_date,
-                
-            }
-            output.append(temp)
+        data = request.GET
+        # print(data)
+        # print(type(data))
+        try:
+            expense_category = data['expense_category']
+            expense_category = int(expense_category)
+            if expense_category == 0:
+                objects = self.queryset
+                for obj in objects:
+                    temp ={
+                        'id':obj.id,
+                        'expense_type':obj.expense_type.name,
+                        'amount':obj.amount,
+                        'expense_date':obj.expense_date,
+                        }
+                    output.append(temp)
+            else:
+                objects = self.queryset.filter(expense_type_id=expense_category)
+                for obj in objects:
+                    temp ={
+                            'id':obj.id,
+                            'expense_type':obj.expense_type.name,
+                            'amount':obj.amount,
+                            'expense_date':obj.expense_date,
+                            
+                        }
+                    output.append(temp)
+        except:
+            objects = self.queryset.filter(expense_date__range=[data['start_date'],data['end_date']])
+            for obj in objects:
+                temp ={
+                        'id':obj.id,
+                        'expense_type':obj.expense_type.name,
+                        'amount':obj.amount,
+                        'expense_date':obj.expense_date,
+                        
+                    }
+                output.append(temp)
+
         return Response(output,status=status.HTTP_200_OK)
 
     def get_object(self,pk):
@@ -244,33 +274,109 @@ class FeeCollectionViewSet(viewsets.ViewSet):
             })
 class PaymentHistoryViewSet(viewsets.ViewSet):
     queryset = StudentPayment.objects.all()
+    fclst = []
+    remaining_dues = 0
+    total_balance = 0
+    output = []
+    def PaymentStateMentDetail(self,temp):
 
-    def PaymentStateMentDetail(self,dataList):
         # newlist = sorted(dataList, key=itemgetter('paid_date'),reverse=False)
-        for dl in dataList:
-            print(dl['paid_amount'])
+        # print(temp['paid_amount'])
+        pa = temp['paid_amount']
+        da = temp['dues']
+
+        if temp['payment_type'] ==1:
+            pass
+
+       
+        if temp['fee_category_id'] not in self.fclst:
+            self.fclst.append(temp['fee_category_id'])
+        else:
+            pass
+            # if pa < da:
+            #     if pa == 0:
+            #         # self.remaining_dues += da
+            #         if self.total_balance > self.remaining_dues:
+            #             self.remaining_dues += 0
+            #             self.total_balance = self.total_balance - da 
+            #     else:
+            #         if self.total_balance > 0:
+            #             if da > self.total_balance:
+            #                 self.remaining_dues =da - self.total_balance
+            #                 self.total_balance = 0
+            #             else:
+            #                 self.remaining_dues = self.total_balance - da
+            #                 self.total_balance -= da
+            #         else:
+            #             self.remaining_dues += da - pa
+            # else:
+        #         if self.remaining_dues > pa:
+        #             self.remaining_dues += da
+        #             self.remaining_dues -= pa
+        #         elif pa == 0:
+        #             if self.total_balance > self.remaining_dues:
+        #                 self.remaining_dues += 0
+        #                 self.total_balance = self.total_balance - da 
+        #         else:
+        #             self.total_balance += pa - da
+
+        #     # elif temp['']
+
+                
+        # else:
+        #     if self.remaining_dues == 0:
+        #         # self.total_balance +=pa
+        #         if self.total_balance > da:
+        #             self.total_balance -= da
+        #         else:
+        #             self.remaining_dues += da - self.total_balance
+        #             self.total_balance = 0
+        #     else:
+        #         if da >pa:
+        #             if pa ==0:
+        #                 self.remaining_dues = self.remaining_dues + da
+        #             else:
+        #                 self.remaining_dues -= pa
+        #         else:
+        #             pass
+            # self.remaining_dues = self.remaining_dues + da
+            # print('remaining Amount',self.remaining_dues)
+            # if self.remaining_dues >= pa:
+            #     self.remaining_dues += da
+            # else:
+            #     self.total_balance += pa -self.remaining_dues
+            #     self.remaining_dues = 0
+                
+            
+
 
     def list(self,request):
         queryset = self.queryset
         data = request.GET
         student_id = data['student_id']
-        objects = StudentPayment.objects.filter(student_id=student_id).order_by('date_created')
-        output = []
-        payment_history = {}
+        objects = StudentPayment.objects.filter(student_id=student_id).order_by('-date_created')
+        self.output = []
+        self.fclst = []
+        # payment_history = {}
         for obj in objects:
             temp = {
                 'paid_date':obj.date_created.strftime(('%m/%d/%Y %a,%H:%M %p')),
                 'fee_category':obj.fee_allocation.fee_category.name,
+                'fee_category_id':obj.fee_allocation.fee_category.id,
                 'dues':obj.fee_allocation.total_amount,
                 'paid_amount':obj.amount,
-                'payment_status':obj.payment_status
+                'payment_status':obj.payment_status,
+                'payment_type':obj.payment_type,
                 }
-         
-            output.append(temp)
+            self.PaymentStateMentDetail(temp)
+            temp['remaining_dues'] = self.remaining_dues
+            temp['total_balance'] = self.total_balance
+            self.output.append(temp)
+            
         # payment_history['payment_history'] = output
-        self.PaymentStateMentDetail(output)
+       
         # newlist = sorted(output, key=itemgetter('paid_date'),reverse=True)
-        return Response(output)
+        return Response(self.output)
 
 # class FeeAllocationWithStudentViewSet(viewsets.ViewSet):
 #     queryset = FeeAllocation.objects.all()
